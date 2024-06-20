@@ -8,12 +8,11 @@ interface Options {
   prefix?: string;
 }
 
-export default function loadAndCacheWebComponents(options: Options): Plugin {
-  const { prefix = 'wc-', cacheDir = './comp_modules' } = options;
+export function wcomp(options?: Options): Plugin {
+  const { prefix = 'wc-', cacheDir = './comp_modules' } = options || {};
   const cacheDirPath = path.resolve(process.cwd(), cacheDir);
 
   const cacheComponent = async (componentName: string) => {
-    console.log(`cache component: ${componentName}`);
     const componentPath = path.join(cacheDirPath, componentName);
     if (!fs.existsSync(componentPath)) {
       fs.mkdirSync(componentPath, { recursive: true });
@@ -23,6 +22,9 @@ export default function loadAndCacheWebComponents(options: Options): Plugin {
 
   return {
     name: 'vite-plugin-wcomp',
+    enforce: 'pre',
+    // configResolved(config) {
+    // },
     async buildStart() {
       // 确保缓存目录存在
       if (!fs.existsSync(cacheDirPath)) {
@@ -50,17 +52,35 @@ export default function loadAndCacheWebComponents(options: Options): Plugin {
           const defineStatements = Array.from(defines).join('\n');
           const registerAllStatements = `${importStatements}\n${defineStatements}`;
           if (id.endsWith('.html')) {
-            code = code.replace('</body>', `<script type="module">${registerAllStatements}</script></body>`);
+            const retCode = code.replace('</body>', `<script type="module">${registerAllStatements}</script></body>`);
+            return {
+              code: retCode,
+              map: null
+            }
           }
           else if (id.endsWith('.vue')) {
             const scriptSetupTag = /<script setup.*?>/;
             if (scriptSetupTag.test(code)) {
-              code = code.replace(scriptSetupTag, `$&\n${registerAllStatements}`);
+              const retCode = code.replace(scriptSetupTag, `$&\n${registerAllStatements}`);
+              console.log(1, retCode)
+              return {
+                code: retCode,
+                map: null
+              }
             } else {
-              code = `<script setup>\n${registerAllStatements}\n</script>\n` + code;
+              const retCode = `<script setup>\n${registerAllStatements}\n</script>\n` + code;
+              console.log(2, retCode)
+              return {
+                code: retCode,
+                map: null
+              }
             }
           } else {
-            code = `${registerAllStatements}\n${code}`;
+            const retCode = `${registerAllStatements}\n${code}`;
+            return {
+              code: retCode,
+              map: null
+            }
           }
         }
       }
