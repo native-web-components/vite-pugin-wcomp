@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from "node:path";
 import axios from 'axios';
 import { Plugin } from 'vite';
+const JSZip = require('jszip');
 
 interface Options {
   cacheDir: string;
@@ -16,7 +17,32 @@ export function wcomp(options?: Options): Plugin {
     const componentPath = path.join(cacheDirPath, componentName);
     if (!fs.existsSync(componentPath)) {
       fs.mkdirSync(componentPath, { recursive: true });
-      console.log(`begin download component: ${componentName}`);
+      const url = `https://wc.zezeping.com/api/components/download/${componentName}/latest`;
+      console.log(`begin download component: ${componentName}, to: ${componentPath}`);
+      const response = await axios({
+        url,
+        method: 'GET',
+        responseType: 'arraybuffer'
+      });
+      const buffer = response.data;
+      // 使用 JSZip 解压缩 ZIP 文件
+      const zip = await JSZip.loadAsync(buffer);
+      const zipEntries = Object.keys(zip.files);
+      // 遍历 ZIP 文件中的所有条目
+      for (const fileName of zipEntries) {
+        const file = zip.files[fileName];
+        const filePath = path.join(componentPath, fileName);
+
+        if (file.dir) {
+          // 创建目录
+          fs.mkdirSync(filePath, { recursive: true });
+        } else {
+          // 创建文件及其目录
+          fs.mkdirSync(path.dirname(filePath), { recursive: true });
+          const content = await file.async('nodebuffer');
+          fs.writeFileSync(filePath, content);
+        }
+      }
     }
   }
 

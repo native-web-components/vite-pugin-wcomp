@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-wcomp",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -31,10 +31,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20",
-    "typescript": "^5",
-    "axios": "^1"
+    "axios": "^1",
+    "typescript": "^5"
   },
   "peerDependencies": {
     "vite": "^5"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "node-fetch": "^3.3.2"
   }
 }

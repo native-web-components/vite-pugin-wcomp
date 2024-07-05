@@ -12,7 +12,7 @@
     "vue": "^3.4.21"
   },
   "devDependencies": {
-    "vite-plugin-wcomp": "../../../vite-plugin-wcomp",
+    "vite-plugin-wcomp": "file:../../../vite-plugin-wcomp",
     "@vitejs/plugin-vue": "^5.0.4",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
