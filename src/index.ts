@@ -10,14 +10,25 @@ interface Options {
 }
 
 export function wcomp(options?: Options): Plugin {
-  const { prefix = 'wc-', cacheDir = './comp_modules' } = options || {};
+  const { prefix = 'wc-', cacheDir = './wcomp_modules' } = options || {};
   const cacheDirPath = path.resolve(process.cwd(), cacheDir);
+
+  function isDirectoryEmpty(directoryPath: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+          return reject(err);
+        }
+        resolve(files.length === 0);
+      });
+    });
+  }
 
   const cacheComponent = async (componentName: string) => {
     const componentPath = path.join(cacheDirPath, componentName);
-    if (!fs.existsSync(componentPath)) {
+    if (!fs.existsSync(componentPath) || (await isDirectoryEmpty(componentPath))) {
       fs.mkdirSync(componentPath, { recursive: true });
-      const url = `https://wc.zezeping.com/api/components/download/${componentName}/latest`;
+      const url = `https://wcomp.zezeping.com/api/components/download/${componentName}/latest`;
       console.log(`begin download component: ${componentName}, to: ${componentPath}`);
       const response = await axios({
         url,
@@ -88,14 +99,14 @@ export function wcomp(options?: Options): Plugin {
             const scriptSetupTag = /<script setup.*?>/;
             if (scriptSetupTag.test(code)) {
               const retCode = code.replace(scriptSetupTag, `$&\n${registerAllStatements}`);
-              console.log(1, retCode)
+              // console.log(1, retCode)
               return {
                 code: retCode,
                 map: null
               }
             } else {
               const retCode = `<script setup>\n${registerAllStatements}\n</script>\n` + code;
-              console.log(2, retCode)
+              // console.log(2, retCode)
               return {
                 code: retCode,
                 map: null
