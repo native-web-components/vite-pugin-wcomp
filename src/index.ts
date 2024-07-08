@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import fs from 'fs-extra';
 import path from "node:path";
 import axios from 'axios';
 import { Plugin } from 'vite';
@@ -12,6 +12,13 @@ interface Options {
 export function wcomp(options?: Options): Plugin {
   const { prefix = 'wc-', cacheDir = './wcomp_modules' } = options || {};
   const cacheDirPath = path.resolve(process.cwd(), cacheDir);
+  const wcompJsonPath = path.resolve(cacheDirPath, '../wcomp.json');
+  if (!fs.existsSync(wcompJsonPath)) {
+    fs.writeJSONSync(wcompJsonPath, {
+      "dependencies": {}
+    }, { spaces: 2 });
+  }
+  const wcompJson = fs.readJSONSync(wcompJsonPath);
 
   function isDirectoryEmpty(directoryPath: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
@@ -28,8 +35,23 @@ export function wcomp(options?: Options): Plugin {
     const componentPath = path.join(cacheDirPath, componentName);
     if (!fs.existsSync(componentPath) || (await isDirectoryEmpty(componentPath))) {
       fs.mkdirSync(componentPath, { recursive: true });
-      const url = `https://wcomp.zezeping.com/api/components/download/${componentName}/latest`;
-      console.log(`begin download component: ${componentName}, to: ${componentPath}`);
+      let version = wcompJson.dependencies[componentName];
+      if (!version) {
+        const url = `https://wcomp.zezeping.com/api/components/info/${componentName}/latest`;
+        try {
+          const { data: rData } = await axios({
+            url,
+            method: 'GET',
+          })
+          version = rData.version;
+        } catch (error) {
+          version = 'latest';
+        }
+        wcompJson.dependencies[componentName] = version;
+        fs.writeJSONSync(wcompJsonPath, wcompJson, { spaces: 2 });
+      }
+      const url = `https://wcomp.zezeping.com/api/components/download/${componentName}/${version}`;
+      console.info(`wcomp: begin download component: ${componentName}, to: ${componentPath}`);
       const response = await axios({
         url,
         method: 'GET',
