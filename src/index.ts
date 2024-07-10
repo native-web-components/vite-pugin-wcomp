@@ -4,13 +4,13 @@ import axios from 'axios';
 import { Plugin } from 'vite';
 const JSZip = require('jszip');
 
-interface Options {
-  cacheDir: string;
-  prefix?: string;
-}
+// interface Options {
+//   cacheDir: string;
+//   prefix?: string;
+// }
 
-export function wcomp(options?: Options): Plugin {
-  const { prefix = 'wc-', cacheDir = './wcomp_modules' } = options || {};
+export function wcomp(/* options?: Options*/): Plugin {
+  const { prefix = 'wc-', cacheDir = './wcomp_modules' } = {};
   const cacheDirPath = path.resolve(process.cwd(), cacheDir);
   const wcompJsonPath = path.resolve(cacheDirPath, '../wcomp.json');
   if (!fs.existsSync(wcompJsonPath)) {
@@ -91,7 +91,7 @@ export function wcomp(options?: Options): Plugin {
       }
     },
     async transform(code: string, id: string) {
-      if (/\.(html|jsx|vue)$/.test(id)) {
+      if (/\.(html|js|ts|jsx|tsx|vue)$/.test(id)) {
         const matches = code.match(/<wc-[a-z0-9-_]+/ig) || [];
         const imports = new Set();
         let defines = new Set();
@@ -134,6 +134,13 @@ export function wcomp(options?: Options): Plugin {
                 map: null
               }
             }
+          } else if (id.endsWith('.js') || id.endsWith('.ts') || id.endsWith('.jsx') || id.endsWith('.tsx')) {
+            const retCode = `${registerAllStatements}\n${code}`;
+            return {
+              code: retCode,
+              map: null
+            }
+
           } else {
             const retCode = `${registerAllStatements}\n${code}`;
             return {

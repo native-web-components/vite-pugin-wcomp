@@ -25,10 +25,6 @@ export default defineConfig({
     //     }
     //   }
     // }),
-    // wcomp({
-    //   cacheDir: fileURLToPath(new URL("./wcomp_modules", import.meta.url)),
-    //   prefix: "wc-",
-    // }),
     wcomp()
   ],
 });
